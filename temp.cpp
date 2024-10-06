@@ -198,7 +198,7 @@ template <typename _TA, typename _TB>
 class Pair {
     public:
     _TA a;
-    _TB b; 
+    _TB b;
     Pair() {}
     template <typename _inTA, typename _inTB>
     Pair(const _inTA &f, const _inTB &s) : a(f), b(s) {}
