@@ -147,6 +147,7 @@ class List {
     _T  back() const { return tail->ele; }
     _T front() const { return head->nxt->ele; }
     int size() const { return this->_size; }
+    void clear() {*this = List();}
 
     void __debugPrint() const { // 顺序输出 List 里的元素
         printf("List: ");
@@ -221,6 +222,42 @@ class Pair {
     }
 };
 
+
+template <typename _T>
+class Queue {
+    private:
+    List <_T> L;
+
+    public:
+    _T front () {return L.front();}
+    void push (const _T &x) {L.push_back(x);}
+    void pop () {L.pop_front();}
+    int size () {return L.size();}
+    void clear () {L.clear();}
+    bool empty() {return L.size() == 0;}
+    
+    void __debugPrint() {
+        L.__debugPrint();
+    }
+};
+
+template <typename _T>
+class Stack {
+    private:
+    List <_T> L;
+
+    public:
+    _T top () {return L.back();}
+    void push (const _T &x) {L.push_back(x);}
+    void pop () {L.pop_back();}
+    int size () {return L.size();}
+    void clear () {L.clear();}
+    bool empty() {return L.size() == 0;}
+
+    void __debugPrint() {
+        L.__debugPrint();
+    }
+};
 
 }
 
