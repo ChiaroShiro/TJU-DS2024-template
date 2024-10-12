@@ -222,6 +222,10 @@ class Pair {
     }
 };
 
+template <typename _TA, typename _TB>
+Pair <_TA, _TB> make_pair(const _TA &a, const _TB &b) {
+    return Pair <_TA, _TB> (a, b);
+}
 
 template <typename _T>
 class Queue {
@@ -230,8 +234,10 @@ class Queue {
 
     public:
     _T front () {return L.front();}
+    _T back() {return L.back();}
     void push (const _T &x) {L.push_back(x);}
     void pop () {L.pop_front();}
+    void pop_back () {L.pop_back();}
     int size () {return L.size();}
     void clear () {L.clear();}
     bool empty() {return L.size() == 0;}
@@ -265,16 +271,17 @@ stl::Pair <int, double> a[5];
 
 #include <vector>
 
+std::vector <int> v1(5);
+
 int main () {
-    std::cout << (typeid(int) == typeid(int&&));
-    std::vector <stl::Pair <int, double> > v1(3);
-    std::vector <stl::Pair <int, double> > v2(v1.begin(), v1.end());
-    stl::List <stl::Pair <int, double> > L(a, a + 4);
-    std::vector <stl::Pair <int, double> > v(5);
-    stl::List <stl::Pair <int, double> > P(v.begin(), v.end());
-    stl::List <stl::Pair <int, double> > M(L.begin(), L.end());
-    stl::List <stl::Pair <int, double> > O;
-    O.push_back({3, 5});
-    stl::List <stl::Pair <int, double>> ::iterator it = L.begin();
-    std::cout << O.begin()->a << ' ' << O.begin()->b;
+    v1[0] = 1;
+    v1[1] = 2;
+    v1[2] = 3;
+    v1[3] = 4;
+    v1[4] = 5;
+    for(auto i: v1) std::cout << i << ' ';
+    puts("");
+    stl::List <int> v2(v1.begin(), v1.end());
+    for(auto i: v2) std::cout << i << ' ';
+    puts("");
 }
