@@ -2,6 +2,23 @@
 
 namespace stl { // 按照 STL 的风格自己实现的几个数据结构
 
+template <typename, typename = std::void_t<>>
+class is_container_type : public std::false_type {};
+
+template <typename T>
+class is_container_type 
+    <T, 
+        std::void_t < typename T::iterator, 
+            decltype(std::declval <T> ().begin(), std::declval <T> ().end())
+        >
+    > : public std::true_type {};
+
+template <typename T, typename inType>
+concept is_iterator_type = requires(T it) {
+    {*it} -> std::convertible_to <inType>;
+    it++;
+};
+
 template <typename _T>
 class List {
     private:
@@ -10,9 +27,9 @@ class List {
         public:
         Element *pre, *nxt;
         _T ele;
-        Element() : pre(NULL), nxt(NULL) {}
-        Element(const _T &x) : ele(x), pre(NULL), nxt(NULL) {}
-        Element(Element *p, const _T &x, Element *n) : pre(p), ele(x), nxt(n) {}
+        Element() : pre(nullptr), nxt(nullptr) {}
+        Element(const _T &x) : pre(nullptr), nxt(nullptr), ele(x) {}
+        Element(Element *p, const _T &x, Element *n) : pre(p), nxt(n), ele(x) {}
     };
 
     int _size;
@@ -25,7 +42,7 @@ class List {
         public:
         Element *ptr;
         
-        iterator() : ptr(NULL) {}
+        iterator() : ptr(nullptr) {}
         iterator(const iterator &np) : ptr(np.ptr) {}
         iterator(Element *np) : ptr(np) {}
         iterator(const Element &val) : ptr(&val) {}
@@ -52,18 +69,16 @@ class List {
     };
 
     List() {
-        head = new Element(NULL, _T(), NULL);
+        head = new Element(nullptr, _T(), nullptr);
         _size = 0;
         tail = head;
     }
-    // 用已有容器构造 List
+
+    // 用已有容器的迭代器区间构造
     template <typename _inType>
+    requires is_iterator_type <_inType, _T>
     List(const _inType begin, const _inType end) {
-        static_assert(std::is_same
-                      <typename std::remove_reference<decltype(*_inType())>::type, _T>
-                      ::value, "Type wrong"); // _inType 的单目*运算出来的类型必须是 _T
-        // 这里是不是还应该有个保证 _inType 有自增运算的 static_assert，不过感觉没必要写了
-        head = new Element(NULL, _T(), NULL);
+        head = new Element(nullptr, _T(), nullptr);
         _size = 0;
         tail = head;
         auto p = begin;
@@ -72,7 +87,28 @@ class List {
             p++;
         }
     }
-    
+
+    // 直接用可顺序遍历容器构造
+    template <typename _conType>
+    requires is_container_type <_conType> ::value
+    List(const _conType& con) {
+        head = new Element(nullptr, _T(), nullptr);
+        _size = 0;
+        tail = head;
+        for(auto p: con) {
+            this->push_back(p);
+        }
+    }
+
+    List (const List &con) {
+        head = new Element(nullptr, _T(), nullptr);
+        _size = 0;
+        tail = head;
+        for(auto p: con) {
+            this->push_back(p);
+        }
+    }
+
     ~List() { // 析构要释放内存
         auto it = this->tail;
         while(it != this->head) {
@@ -84,14 +120,14 @@ class List {
 
     void push_back(const _T &x) {
         ++_size;
-        tail->nxt = new Element(tail, x, NULL);
+        tail->nxt = new Element(tail, x, nullptr);
         tail = tail->nxt;
     }
 
     void push_front(const _T &x) {
         ++_size;
         head->ele = x;
-        head->pre = new Element(NULL, _T(), head);
+        head->pre = new Element(nullptr, _T(), head);
         head = head->pre;
     }
 
@@ -109,11 +145,11 @@ class List {
 
     // 在 pos 迭代器后面插入一个 val
     void insert(const iterator &pos, const _T &val) {
-        if(pos.ptr == NULL)
+        if(pos.ptr == nullptr)
             return;
         ++_size;
-        if(pos.ptr->nxt == NULL) {
-            pos.ptr->nxt = new Element(pos.ptr, val, NULL);
+        if(pos.ptr->nxt == nullptr) {
+            pos.ptr->nxt = new Element(pos.ptr, val, nullptr);
             tail = pos.ptr->nxt;
             return;
         }
@@ -124,7 +160,7 @@ class List {
 
     // 把 pos 迭代器删除
     void erase(const iterator &pos) {
-        if(pos.ptr == NULL)
+        if(pos.ptr == nullptr)
             return;
         if(pos.ptr->nxt)
             pos.ptr->nxt->pre = pos.ptr->pre;
@@ -139,7 +175,7 @@ class List {
 
     // begin() 和 end() 提供左闭右开的迭代器
     iterator begin() const { return iterator(head->nxt); }
-    iterator end()   const { return iterator(NULL); } // 右开的一直是 NULL
+    iterator end()   const { return iterator(nullptr); } // 右开的一直是 nullptr
     // getTail() 和 getHead() 提供左开右闭的迭代器
     iterator getTail() const { return iterator(tail); }
     iterator getHead() const { return iterator(head); } 
@@ -158,7 +194,7 @@ class List {
     }
 
     List &operator =(const List &p) {
-        head = new Element(NULL, _T(), NULL);
+        head = new Element(nullptr, _T(), nullptr);
         _size = 0;
         tail = head;
         for(auto it = p.begin(); it != p.end(); it++) 
@@ -223,7 +259,7 @@ class Pair {
 };
 
 template <typename _TA, typename _TB>
-Pair <_TA, _TB> make_pair(const _TA &a, const _TB &b) {
+auto make_pair(const _TA &a, const _TB &b) {
     return Pair <_TA, _TB> (a, b);
 }
 
@@ -274,6 +310,8 @@ stl::Pair <int, double> a[5];
 std::vector <int> v1(5);
 
 int main () {
+    std::cout << stl::is_container_type<stl::List <int>>::value << '\n';
+    std::cout << stl::is_container_type<stl::Pair <int, int>>::value << '\n';
     v1[0] = 1;
     v1[1] = 2;
     v1[2] = 3;
@@ -284,4 +322,11 @@ int main () {
     stl::List <int> v2(v1.begin(), v1.end());
     for(auto i: v2) std::cout << i << ' ';
     puts("");
+    stl::List <int> v4(v2);
+    for(auto i: v4) std::cout << i << ' ';
+    puts("");
+    stl::List <int> v3(v1);
+    for(auto i: v3) std::cout << i << ' ';
+    puts("");
+    return 0;
 }
